@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from alignment.Registration import direct_alignment, cal_pdb_RMSD, mask_alignment
+from alignment.Registration import direct_alignment, cal_pdb_RMSD, mask_alignment, extract_top_K
 from extract_points.Sample_based_VoxEM import Sample_Cluster
 import os
 
@@ -20,10 +20,6 @@ parser.add_argument("--seg", action='store_true', default=False, help='segmentat
 parser.add_argument("--atom", action='store_true', default=False, help='atomic model or not')
 
 args = parser.parse_args()
-
-"""
-example: python main.py --data_dir data/emd_3695_3696 --source emd_3695.map --target emd_3696.map --source_contour 0.008 --target_contour 0.002 --source_pdb 5nsr.pdb --source_sup_pdb 5nsr_sup.pdb --voxel 5.0
-"""
 
 data_dir = args.data_dir
 source_name = args.source
@@ -47,7 +43,10 @@ if not seg_flag:
 
     """
     Gloabl and local registration (No mask version)
+
+    example: python main.py --data_dir ../data/emd_3695_3696 --source emd_3695.map --target emd_3696.map --source_contour 0.008 --target_contour 0.002 --source_pdb 5nsr.pdb --source_sup_pdb 5nsr_sup.pdb --voxel 5.0
     """
+
     T = direct_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
     print("estiatmed transformation matrix: ", T)
 
@@ -59,6 +58,16 @@ else:
 
     """
     Local registration (mask version)
+
+    example: python main.py --data_dir ../data/emd_3661_6647 --source emd_3661.map --target emd_6647.map --source_contour 0.07 --target_contour 0.017 --source_pdb 5no2.pdb --source_sup_pdb 5no2_5juu_sup.pdb --voxel 5.0 --seg
     """
-    mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
+    # mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
+
+    record_dir = "%s/record.txt" % data_dir
+    record_T_dir = "%s/record_T.npy" % data_dir
+    K = 10
+    save_dir = "%s/extract_top_%d.txt" % (data_dir, K)
+    source_pdb_dir = "%s/%s" % (data_dir, "5no2.pdb")
+    source_sup_dir = "%s/%s" % (data_dir, "5no2_5juu_sup.pdb")
+    extract_top_K(record_dir, record_T_dir, K, save_dir, source_pdb_dir=source_pdb_dir, source_sup_dir=source_sup_dir)
     

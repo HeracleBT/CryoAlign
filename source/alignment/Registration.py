@@ -1,6 +1,7 @@
 from .Utils import *
 import numpy as np
 import os
+from copy import deepcopy
 
 
 def Registration_given_feature(data_dir, source_dir, target_dir, source_sample_dir, target_sample_dir, VOXEL_SIZE=5.0, visualize=False, T=None, one_stage=False):
@@ -146,7 +147,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
     t_teaser = solution.translation
     T_teaser = Rt2T(R_teaser, t_teaser)
 
-    def cal_score(A_pcd, B_pcd, max_correspondence_dist, final_T, extend_score=False):
+    def cal_score(A_pcd, B_pcd, max_correspondence_dist, final_T):
         A_points = np.array(A_pcd.points)
         eval_metric = eval(A_pcd, B_pcd, max_correspondence_dist, final_T)
         A_transformed = deepcopy(A_pcd)
@@ -160,16 +161,17 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
         A_points, B_points = np.array(A_transformed.points), np.array(B_pcd.points)
         A_vector, B_vector = np.array(A_transformed.normals), np.array(B_pcd.normals)
 
-        sigma = 3.5
-        weights = None
-        A_gmm = create_GMM(A_points, sigma, weights)
-        B_gmm = create_GMM(B_points, sigma, weights)
-        distri_score = cal_JS_KL(A_gmm, B_gmm, 10 ** 4)
+        # sigma = 3.5
+        # weights = None
+        # A_gmm = create_GMM(A_points, sigma, weights)
+        # B_gmm = create_GMM(B_points, sigma, weights)
+        # distri_score = cal_JS_KL(A_gmm, B_gmm, 10 ** 4)
 
         cosin_dist_list = np.diagonal(np.dot(A_vector[correspondence_set[:, 0]], B_vector[correspondence_set[:, 1]].T))
         cosin_dist = cosin_dist_list[cosin_dist_list >= 0.6].shape[0] / cosin_dist_list.shape[0]
 
-        score = cosin_dist * (1 - distri_score)
+        # score = cosin_dist * (1 - distri_score)
+        score = cosin_dist
 
         return score
 
@@ -181,7 +183,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
         init_file = "%s/init_trans" % data_dir
         write_trans(init_transformation, init_file)
         os.system(
-            "source/alignment/FRICP %s/target_partial.ply %s/source.ply %s %s/init_trans 3" % (
+            "alignment/FRICP %s/target_partial.ply %s/source.ply %s %s/init_trans 3" % (
                 data_dir, data_dir, data_dir, data_dir))
     else:
         writePLY(B_pcd, "%s/target.ply" % data_dir)
@@ -189,7 +191,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
         init_file = "%s/init_trans" % data_dir
         write_trans(init_transformation, init_file)
         os.system(
-            "source/alignment/FRICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
+            "alignment/FRICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
                 data_dir, data_dir, data_dir, data_dir))
 
     icp_file = "%s/final_trans" % data_dir
@@ -200,7 +202,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
     return final_T, score
 
 
-def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=5.0, mask_file=None):
+def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=5.0, store_partial=False):
     sample_A_points, sample_A_normals = load_sample(source_sample_dir)
     sample_B_points, sample_B_normals = load_sample(target_sample_dir)
     A_pcd = o3d.geometry.PointCloud()
@@ -212,14 +214,14 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
     A_key_pcd = load_xyz(source_key_dir)
     B_key_pcd = load_xyz(target_key_dir)
 
-    A_key_feats = cal_SHOT(sample_A_points, sample_A_normals, temp_dir, np.array(A_key_pcd.points),
-                           radius=VOXEL_SIZE * 5.0)
-    B_key_feats = cal_SHOT(sample_B_points, sample_B_normals, temp_dir, np.array(B_key_pcd.points),
-                           radius=VOXEL_SIZE * 5.0)
-
     temp_dir = "%s/temp" % data_dir
     if not os.path.exists(temp_dir):
         os.mkdir(temp_dir)
+
+    A_key_feats = cal_SHOT(sample_A_points, sample_A_normals, temp_dir, np.array(A_key_pcd.points),
+                           radius=VOXEL_SIZE * 7.0)
+    B_key_feats = cal_SHOT(sample_B_points, sample_B_normals, temp_dir, np.array(B_key_pcd.points),
+                           radius=VOXEL_SIZE * 7.0)
 
     A_min_bound = A_pcd.get_min_bound()
     A_max_bound = A_pcd.get_max_bound()
@@ -234,12 +236,14 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
         radius = np.max(A_dist_cor) * 1.1 / 2
         center = B_min_bound + radius / 10
         terminal = B_max_bound
-        step = int(radius // 4)
+        step = int(radius // 2)
 
         max_correspondence_dist = 10.0
-        store_partial = True
+        store_partial = store_partial
 
         record_dir = "%s/record.txt" % data_dir
+        record_T_dir = "%s/record_T.npy" % data_dir
+        record_T = []
 
         with open(record_dir, 'w') as f:
             f.write("\t".join(["t_x", "t_y", "t_z", "score"]))
@@ -255,11 +259,19 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
                         mask["radius"] = radius
 
                         final_T, score = Registration_mask(temp_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats, B_key_feats, mask, max_correspondence_dist=max_correspondence_dist, VOXEL_SIZE=VOXEL_SIZE, store_partial=store_partial)
-
-                        if score is not None:
-                                f.write("\t".join(
-                                    ["%.2f" % i, "%.2f" % j, "%.2f" % k, "%.2f" % score]))
-                                f.write("\n")
+                        
+                        if final_T is not None:
+                            f.write("\t".join(
+                                ["%.2f" % i, "%.2f" % j, "%.2f" % k, "%.2f" % score]))
+                            f.write("\n")
+                            record_T.append(final_T)
+                        else:
+                            f.write("\t".join(
+                                ["%.2f" % i, "%.2f" % j, "%.2f" % k, "0.00"]))
+                            f.write("\n")
+                            record_T.append(np.identity(4))
+        
+        np.save(record_T_dir, np.stack(record_T, axis=0))
 
     else:
         print("please exchange the source map and target one")
@@ -267,10 +279,38 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
     return
 
 
-def mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE, mask_file=None):
+def mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE, store_partial=False):
     source_key_dir = "%s/Points_%s_Key.xyz" % (data_dir, source_name[4:-4])
     target_key_dir = "%s/Points_%s_Key.xyz" % (data_dir, target_name[4:-4])
     source_sample_dir = "%s/%s_%.2f.txt" % (data_dir, source_name[:-4], VOXEL_SIZE)
     target_sample_dir = "%s/%s_%.2f.txt" % (data_dir, target_name[:-4], VOXEL_SIZE)
-    Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=5.0, mask_file=mask_file)
+    Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=5.0, store_partial=store_partial)
+    return
+
+
+def extract_top_K(record_dir, record_T_dir, K, save_dir, source_pdb_dir=None, source_sup_dir=None):
+    score_list = []
+    with open(record_dir, "r") as f:
+        lines = f.readlines()[1:]
+        for line in lines:
+            score = float(line.strip().split()[-1])
+            score_list.append(score)
+    lst_with_index = [(idx, val) for idx, val in enumerate(score_list)]
+    sorted_list = sorted(lst_with_index, key=lambda x: x[1], reverse=True)
+    top_k_index = [x[0] for x in sorted_list[:K]]
+
+    record_T_list = np.load(record_T_dir)
+    with open(save_dir, "w") as f:
+        f.write("\t".join(["score", "transformation matrix", "RMSD"]))
+        f.write("\n")
+        for idx in top_k_index:
+            score = score_list[idx]
+            T = record_T_list[idx]
+            f.write("%.2f\t" % score)
+            f.write(",".join(["%.4f" % i for i in T.reshape(-1).tolist()]))
+            if source_pdb_dir:
+                rmsd = cal_pdb_RMSD(source_pdb_dir, source_sup_dir, T)
+                f.write("\t%.2f\n" % rmsd)
+            else:
+                f.write("\n")
     return

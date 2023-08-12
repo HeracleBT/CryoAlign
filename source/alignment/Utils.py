@@ -289,6 +289,51 @@ def draw_registration_result(source, target, transformation=None):
                                       up=[-0.2779, -0.9482, 0.1556])
 
 
+def create_GMM(array, sigma, weights=None):
+    n_gaussians = len(array)
+    covirance = sigma * np.ones(n_gaussians)
+    if weights is None:
+        weights = (1. / n_gaussians) * np.ones(n_gaussians)
+        # print(weights.shape)
+    gmm = GaussianMixture(n_components=n_gaussians, covariance_type="spherical")
+    gmm.weights_ = weights
+    gmm.means_ = array
+    gmm.covariances_ = covirance
+    gmm.precisions_cholesky_ = _compute_precision_cholesky(covirance, "spherical")
+    return gmm
+
+
+def set_weights(array):
+    if len(array) < 1:
+        return Nonec
+    weights = np.abs(array)
+    weights = weights - np.min(weights)
+    weights = weights / np.sum(weights)
+    return weights
+
+
+def cal_KL(gmm_p, gmm_q, n_samples):
+    X, _ = gmm_p.sample(n_samples)
+    log_p_X = gmm_p.score_samples(X)
+    log_q_X = gmm_q.score_samples(X)
+    return (log_p_X.mean() - log_q_X.mean()) / (-log_q_X.mean())
+
+
+def cal_JS_KL(gmm_p, gmm_q, n_samples):
+    X, _ = gmm_p.sample(n_samples)
+    log_p_X = gmm_p.score_samples(X)
+    log_q_X = gmm_q.score_samples(X)
+    log_mix_X = np.logaddexp(log_p_X, log_q_X)
+
+    Y, _ = gmm_q.sample(n_samples)
+    log_p_Y = gmm_p.score_samples(Y)
+    log_q_Y = gmm_q.score_samples(Y)
+    log_mix_Y = np.logaddexp(log_p_Y, log_q_Y)
+
+    return (log_p_X.mean() - (log_mix_X.mean() - np.log(2))
+            + log_q_Y.mean() - (log_mix_Y.mean() - np.log(2))) / 2
+
+
 def calRMSD(source, target, transformation=None):
     atom_num = source.shape[0]
     if transformation is not None:

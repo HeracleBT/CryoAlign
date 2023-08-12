@@ -36,8 +36,8 @@ mask_file = args.mask_file
 """
 sample and clustering
 """
-# Sample_Cluster(data_dir, source_name, source_contour, VOXEL_SIZE)
-# Sample_Cluster(data_dir, target_name, target_contour, VOXEL_SIZE)
+Sample_Cluster(data_dir, source_name, source_contour, VOXEL_SIZE)
+Sample_Cluster(data_dir, target_name, target_contour, VOXEL_SIZE)
 
 if not seg_flag:
 
@@ -50,9 +50,9 @@ if not seg_flag:
     T = direct_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
     print("estiatmed transformation matrix: ", T)
 
-    # source_pdb_dir = "%s/%s" % (data_dir, source_pdb_name)
-    # source_sup_dir = "%s/%s" % (data_dir, source_sup_pdb_name)
-    # print("RMSD between estiamted transformed PDB and ground truth", cal_pdb_RMSD(source_pdb_dir, source_sup_dir, T))
+    source_pdb_dir = "%s/%s" % (data_dir, source_pdb_name)
+    source_sup_dir = "%s/%s" % (data_dir, source_sup_pdb_name)
+    print("RMSD between estiamted transformed PDB and ground truth", cal_pdb_RMSD(source_pdb_dir, source_sup_dir, T))
 
 else:
 
@@ -61,7 +61,7 @@ else:
 
     example: python main.py --data_dir ../data/emd_3661_6647 --source emd_3661.map --target emd_6647.map --source_contour 0.07 --target_contour 0.017 --source_pdb 5no2.pdb --source_sup_pdb 5no2_5juu_sup.pdb --voxel 5.0 --seg
     """
-    # mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
+    mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE)
 
     record_dir = "%s/record.txt" % data_dir
     record_T_dir = "%s/record_T.npy" % data_dir

@@ -62,7 +62,7 @@ def Registration_given_feature(data_dir, source_dir, target_dir, source_sample_d
         write_trans(init_transformation, init_file)
 
         os.system(
-            "alignment/FRICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
+            "alignment/ICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
             temp_dir, temp_dir, temp_dir, temp_dir))
 
         icp_file = "%s/final_trans" % temp_dir
@@ -73,6 +73,8 @@ def Registration_given_feature(data_dir, source_dir, target_dir, source_sample_d
 
     if visualize:
         draw_registration_result(A_pcd, B_pcd, T_icp)
+
+    os.system("rm -rf %s" % temp_dir)
 
     return T_icp
 
@@ -183,7 +185,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
         init_file = "%s/init_trans" % data_dir
         write_trans(init_transformation, init_file)
         os.system(
-            "alignment/FRICP %s/target_partial.ply %s/source.ply %s %s/init_trans 3" % (
+            "alignment/ICP %s/target_partial.ply %s/source.ply %s %s/init_trans 3" % (
                 data_dir, data_dir, data_dir, data_dir))
     else:
         writePLY(B_pcd, "%s/target.ply" % data_dir)
@@ -191,7 +193,7 @@ def Registration_mask(data_dir, A_pcd, B_pcd, A_key_pcd, B_key_pcd, A_key_feats,
         init_file = "%s/init_trans" % data_dir
         write_trans(init_transformation, init_file)
         os.system(
-            "alignment/FRICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
+            "alignment/ICP %s/target.ply %s/source.ply %s %s/init_trans 3" % (
                 data_dir, data_dir, data_dir, data_dir))
 
     icp_file = "%s/final_trans" % data_dir
@@ -236,7 +238,7 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
         radius = np.max(A_dist_cor) * 1.1 / 2
         center = B_min_bound + radius / 10
         terminal = B_max_bound
-        step = int(radius // 2)
+        step = int(radius // 2) # translation interval of mask
 
         max_correspondence_dist = 10.0
         store_partial = store_partial
@@ -275,6 +277,8 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
 
     else:
         print("please exchange the source map and target one")
+
+    os.system("rm -rf %s" % temp_dir)
 
     return
 

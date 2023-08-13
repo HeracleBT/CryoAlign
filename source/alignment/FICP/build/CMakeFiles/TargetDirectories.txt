@@ -1,4 +1,0 @@
-/home/data/sleeping_work/Structure-retrieval/em_retrieval/github_repo/source/alignment/FICP/build/CMakeFiles/rebuild_cache.dir
-/home/data/sleeping_work/Structure-retrieval/em_retrieval/github_repo/source/alignment/FICP/build/CMakeFiles/edit_cache.dir
-/home/data/sleeping_work/Structure-retrieval/em_retrieval/github_repo/source/alignment/FICP/build/CMakeFiles/data.dir
-/home/data/sleeping_work/Structure-retrieval/em_retrieval/github_repo/source/alignment/FICP/build/CMakeFiles/FRICP.dir

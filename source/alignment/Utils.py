@@ -3,18 +3,10 @@ import numpy as np
 from scipy.spatial import cKDTree
 import teaserpp_python
 import copy
-from sklearn.cluster import DBSCAN
 from sklearn.mixture import GaussianMixture
-from scipy.ndimage import affine_transform, map_coordinates
 from sklearn.mixture._gaussian_mixture import _compute_precision_cholesky
-from sklearn.neighbors import radius_neighbors_graph
-import re
 import os
 from collections import defaultdict
-import scipy.special as sp
-import ot
-import random
-import math
 
 
 def load_data(file_path, file_down_path):

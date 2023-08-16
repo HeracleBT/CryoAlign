@@ -297,7 +297,7 @@ def create_GMM(array, sigma, weights=None):
 
 def set_weights(array):
     if len(array) < 1:
-        return Nonec
+        return None
     weights = np.abs(array)
     weights = weights - np.min(weights)
     weights = weights / np.sum(weights)

@@ -1,0 +1,34 @@
+FROM nvidia/cuda:11.0.3-cudnn8-devel-ubuntu18.04 AS BUILD 
+
+COPY test/CryoAlign /CryoAlign
+
+RUN apt-get update -y \
+    && apt-get -y install python3.6 \
+    && apt-get -y install python3-pip python3-dev \
+    && cd /usr/local/bin \
+    && rm -f python \
+    && rm -f python3 \
+    && rm -f pip \
+    && rm -f pip3 \
+    && cd /usr/bin \
+    && rm -f python \
+    && rm -f pip \
+    && ln -s /usr/bin/python3.6 /usr/bin/python \
+    && ln -s /usr/bin/pip3 /usr/bin/pip \
+    && python -m pip install --upgrade pip \
+    && pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html \
+    && pip install open3d  \
+    && apt-get -y install git cmake libeigen3-dev libboost-all-dev libfftw3-dev libgl1-mesa-glx \
+    && apt-get clean \
+    && rm -f /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python \
+    && git clone https://github.com/MIT-SPARK/TEASER-plusplus.git \
+    && cd /TEASER-plusplus \
+    && cd build && cmake -DTEASERPP_PYTHON_VERSION=3.6 .. \
+    && make teaserpp_python && cd python && pip install . \
+    && pip install tqdm \
+    && cd /CryoAlign/source/extract_points/Vectorize \
+    && make && cp Sample ../ \
+    && cd /CryoAlign/source/alignment/FastICP \
+    && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make && cp ICP ../../ \
+    && rm -rf /CryoAlign/source/extract_points/Vectorize \
+    && rm -rf /CryoAlign/source/alignment/FastICP

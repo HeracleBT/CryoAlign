@@ -4,7 +4,6 @@ import os
 from functools import partial
 import struct
 import numpy as np
-from collections import Counter, defaultdict
 import multiprocessing
 from sklearn.cluster import DBSCAN
 import torch

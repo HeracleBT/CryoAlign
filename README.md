@@ -87,3 +87,23 @@ run the following code
 ```
 python main.py --data_dir ../data/emd_3661_6647 --source emd_3661.map --target emd_6647.map --source_contour 0.07 --target_contour 0.017 --source_pdb 5no2.pdb --source_sup_pdb 5no2_5juu_sup.pdb --voxel 5.0 --seg
 ```
+
+## For atomic modeling
+
+example: data/emd_4775_4776
+
+We extract chains A and B from EMD-4775 (PDB ID: 6rah) and rigidly align them into map EMD-4776 (PDB ID: 6rai).
+```
+python atomic_model_example.py --stage rigid --visualize
+```
+
+The superimposition of point clouds is visualized, in which chain A is colored red, chain B is colored green, and the target map is colored blue. The rigid parameters are also applied to corresponding PDB structures, named "chain_*_rigid.pdb".
+
+### Flexible fitting
+
+Based on above well-assembly of point clouds, CryoAlign can further perform flexible fitting by integrating with Bayesian Coherent Point Drift (O. Hirose, "[Geodesic-Based Bayesian Coherent Point Drift](https://ieeexplore.ieee.org/document/9918058)," [IEEE TPAMI](https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=34), Oct 2022.).
+```
+python atomic_model_example.py --stage flexible --visualize
+```
+
+For convenience, we provide the result of BCPD, named "output_flexible.txt", and the visualization of transformed point clouds is shown. Furthermore, the point displacement between matched points is performed to the atomic model, named "chain_*_flexible.pdb".

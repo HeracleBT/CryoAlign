@@ -238,7 +238,7 @@ def Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_k
         radius = np.max(A_dist_cor) * 1.1 / 2
         center = B_min_bound + radius / 10
         terminal = B_max_bound
-        step = int(radius // 2) # translation interval of mask
+        step = int(radius // 2)  # translation interval of mask
 
         max_correspondence_dist = 10.0
         store_partial = store_partial
@@ -288,7 +288,7 @@ def mask_alignment(data_dir, source_name, target_name, VOXEL_SIZE, store_partial
     target_key_dir = "%s/Points_%s_Key.xyz" % (data_dir, target_name[4:-4])
     source_sample_dir = "%s/%s_%.2f.txt" % (data_dir, source_name[:-4], VOXEL_SIZE)
     target_sample_dir = "%s/%s_%.2f.txt" % (data_dir, target_name[:-4], VOXEL_SIZE)
-    Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=5.0, store_partial=store_partial)
+    Registration_mask_list(data_dir, source_key_dir, source_sample_dir, target_key_dir, target_sample_dir, VOXEL_SIZE=VOXEL_SIZE, store_partial=store_partial)
     return
 
 

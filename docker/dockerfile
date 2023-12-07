@@ -1,6 +1,6 @@
 FROM nvidia/cuda:11.0.3-cudnn8-devel-ubuntu18.04 AS BUILD 
 
-COPY test/CryoAlign /CryoAlign
+COPY ./CryoAlign /CryoAlign
 
 RUN apt-get update -y \
     && apt-get -y install python3.6 \

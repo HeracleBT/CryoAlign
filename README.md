@@ -42,7 +42,7 @@ Build image from dockerfile and create a container from the image
 
 ```
 docker build -f dockerfile -t [image name] .
-docker run -it --name [container name] --gpu all [image name]
+docker run -it --name [container name] --gpus all [image name]
 ```
 
 Enter the container, install PCL lib

@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++14 -fopenmp -O3 -DNDEBUG  -rdynamic CMakeFiles/FRICP.dir/main.cpp.o  -o ICP 

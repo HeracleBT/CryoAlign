@@ -1,4 +1,6 @@
 import numpy as np
+import open3d as o3d
+from alignment.Registration import find_correspondences
 
 
 def read_features(feature_dir, mode='SHOT', key=False):
@@ -93,3 +95,37 @@ def transform_pdb(pdbFile, output_dir, T):
                         print('throw away 3D coordinate %s' % " ".join(temp_atom_coord[10:13]))
                         print(pdbFile)
     return
+
+
+def cal_feature_corres(A_pcd, A_features, B_pcd, B_features, gt_T, accept_thres):
+    gt_eval = o3d.pipelines.registration.evaluate_registration(A_pcd, B_pcd, accept_thres, gt_T)
+    gt_corres = np.array(gt_eval.correspondence_set)
+    corrs_A, corrs_B = find_correspondences(A_features, B_features, mutual_filter=False)
+    B_points = np.array(B_pcd.points)
+    pre_list = []
+    recall_list = []
+    match_num = 0
+    acceptable_thres = accept_thres
+    correct_corres = []
+    false_corres = []
+    total_match = len(corrs_A)
+    if total_match != 0:
+        nns01 = np.ones((len(A_features))) * (-1)
+        nns01[corrs_A] = corrs_B
+        for i in range(len(gt_corres)):
+            corres_i, corres_j = gt_corres[i]
+            gt_point = B_points[corres_j]
+            knn_corres_j = int(nns01[corres_i])
+            if knn_corres_j == -1 or knn_corres_j == len(B_features):
+                continue
+            target_point = B_points[knn_corres_j]
+            if np.linalg.norm((gt_point - target_point)) <= acceptable_thres:
+                correct_corres.append([corres_i, corres_j])
+                match_num += 1
+            else:
+                false_corres.append([corres_i, corres_j])
+        pre_ratio = match_num / total_match
+        recall_ratio = match_num / len(A_features)
+        pre_list.append(pre_ratio)
+        recall_list.append(recall_ratio)
+    return pre_list, recall_list
